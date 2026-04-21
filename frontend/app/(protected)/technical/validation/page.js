@@ -7,15 +7,14 @@ const API_BASE =
 
 const LABEL_OPTIONS = ["Concrete", "Soil Aggregates", "Reinforcing Steel Bar"];
 
-function authHeaders() {
+function authHeaders(json = false) {
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("access_token") ||
-        localStorage.getItem("technician-token")
+      ? localStorage.getItem("access_token") || localStorage.getItem("token")
       : null;
 
   return {
-    "Content-Type": "application/json",
+    ...(json ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
@@ -65,7 +64,7 @@ export default function ValidationPage() {
     try {
       const res = await fetch(`${API_BASE}/api/validate`, {
         method: "POST",
-        headers: authHeaders(),
+        headers: authHeaders(true),
         body: JSON.stringify({
           sample_id: sampleId,
           corrected_label: entry.corrected_label,
@@ -77,7 +76,7 @@ export default function ValidationPage() {
         let detail = `Validation failed (${res.status})`;
         try {
           const data = await res.json();
-          detail = data.detail || detail;
+          detail = JSON.stringify(data);
         } catch {}
         throw new Error(detail);
       }
@@ -85,11 +84,28 @@ export default function ValidationPage() {
       await loadReviews();
       alert("Validation submitted successfully.");
     } catch (err) {
-      alert(
-        typeof err?.message === "string"
-            ? err.message
-            : JSON.stringify(err?.message || err, null, 2)
-        );
+      let message = "Validation failed.";
+
+      if (typeof err?.message === "string") {
+        try {
+          const parsed = JSON.parse(err.message);
+
+          if (Array.isArray(parsed)) {
+            message = parsed.map((x) => x.msg || JSON.stringify(x)).join("\n");
+          } else if (parsed?.detail) {
+            message =
+              typeof parsed.detail === "string"
+                ? parsed.detail
+                : JSON.stringify(parsed.detail, null, 2);
+          } else {
+            message = JSON.stringify(parsed, null, 2);
+          }
+        } catch {
+          message = err.message;
+        }
+      }
+
+      alert(message);
     } finally {
       setSubmittingId(null);
     }
@@ -101,7 +117,7 @@ export default function ValidationPage() {
         <div className="header">
           <div>
             <h1>Validation Queue</h1>
-            <p>Review manual-review and mandatory-override AI classifications.</p>
+            <p className="description">Review manual-review and mandatory-override AI classifications.</p>
           </div>
           <button className="refreshBtn" onClick={loadReviews}>
             Refresh
@@ -165,7 +181,7 @@ export default function ValidationPage() {
                 </div>
 
                 <div className="formBlock">
-                  <label>Corrected Label</label>
+                  <label className="formLabel">Corrected Label</label>
                   <select
                     value={current.corrected_label || ""}
                     onChange={(e) =>
@@ -186,7 +202,7 @@ export default function ValidationPage() {
                     ))}
                   </select>
 
-                  <label>Justification</label>
+                  <label className="formLabel">Justification</label>
                   <textarea
                     rows={4}
                     placeholder="Explain why the AI result should be corrected..."
@@ -234,10 +250,13 @@ export default function ValidationPage() {
         h1 {
           margin: 0 0 6px;
           font-size: 28px;
+          color: #000000 !important;
+          font-weight: 800;
         }
-        p {
+        .description {
           margin: 0;
-          color: #000000;
+          color: #000000 !important;
+          opacity: 1 !important;
         }
         .grid {
           display: grid;
@@ -252,12 +271,14 @@ export default function ValidationPage() {
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
         }
         .error {
-          color: #b91c1c;
+          color: #b91c1c !important;
           border-color: #fecaca;
           background: #fff7f7;
         }
         .empty {
-          color: #666;
+          color: #000000 !important;
+          text-align: center;
+          padding: 24px;
         }
         .row {
           display: flex;
@@ -269,31 +290,34 @@ export default function ValidationPage() {
           margin-bottom: 16px;
         }
         .label {
-          font-size: 12px;
-          color: #777;
+          font-size: 11px;
+          color: #000000 !important;
           margin-bottom: 4px;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
+          letter-spacing: 0.05em;
+          font-weight: 700;
+          opacity: 1 !important;
         }
         .value {
           font-size: 15px;
-          font-weight: 600;
-          color: #222;
+          font-weight: 700;
+          color: #000000 !important;
+          opacity: 1 !important;
         }
         .badge {
           border-radius: 999px;
           padding: 8px 12px;
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 800;
           white-space: nowrap;
         }
         .warn {
           background: #fff7ed;
-          color: #c2410c;
+          color: #c2410c !important;
         }
         .danger {
           background: #fef2f2;
-          color: #b91c1c;
+          color: #b91c1c !important;
         }
         .twoCol {
           display: grid;
@@ -304,20 +328,23 @@ export default function ValidationPage() {
         .formBlock {
           display: grid;
           gap: 10px;
+          border-top: 1px solid #ececf4;
+          padding-top: 18px;
         }
-        label {
+        .formLabel {
           font-size: 13px;
-          font-weight: 600;
-          color: #333;
+          font-weight: 800;
+          color: #000000 !important;
         }
         select,
         textarea {
           width: 100%;
-          border: 1px solid #d8d8e5;
+          border: 1px solid #b3b3cc; /* Darkened border for visibility */
           border-radius: 12px;
           padding: 12px 14px;
           font: inherit;
           background: #fff;
+          color: #000000 !important;
         }
         .submitBtn,
         .refreshBtn {
@@ -327,11 +354,11 @@ export default function ValidationPage() {
           font-weight: 700;
           cursor: pointer;
           background: #14003a;
-          color: #fff;
+          color: #ffffff !important;
         }
         .submitBtn:disabled,
         .refreshBtn:disabled {
-          opacity: 0.6;
+          opacity: 0.5;
           cursor: not-allowed;
         }
       `}</style>

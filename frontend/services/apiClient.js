@@ -3,15 +3,8 @@ const API_BASE_URL =
 
 export function saveAuthSession(payload) {
   if (typeof window === "undefined") return;
-
-  const token = payload?.access_token || "";
-
-  // canonical key
-  localStorage.setItem("access_token", token);
-
-  // backward-compatible key for existing pages/code
-  localStorage.setItem("token", token);
-
+  localStorage.setItem("token", payload.access_token);
+  localStorage.setItem("access_token", payload.access_token);
   localStorage.setItem(
     "user",
     JSON.stringify({

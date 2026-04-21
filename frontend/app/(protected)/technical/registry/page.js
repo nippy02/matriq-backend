@@ -6,15 +6,14 @@ import { useEffect, useState } from "react";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
 
-function authHeaders() {
+function authHeaders(json = false) {
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("access_token") ||
-        localStorage.getItem("technician-token")
+      ? localStorage.getItem("access_token") || localStorage.getItem("token")
       : null;
 
   return {
-    "Content-Type": "application/json",
+    ...(json ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
@@ -52,9 +51,9 @@ export default function RegistryPage() {
         <div className="header">
           <div>
             <h1>Sample Registry</h1>
-            <p>All classified and registered samples.</p>
+            <p className="description">All classified and registered samples.</p>
           </div>
-          <button onClick={loadSamples}>Refresh</button>
+          <button className="refresh-btn" onClick={loadSamples}>Refresh</button>
         </div>
 
         {loading && <div className="card">Loading samples...</div>}
@@ -92,7 +91,7 @@ export default function RegistryPage() {
                     <td>{item.decision || "-"}</td>
                     <td>{item.model_version || "-"}</td>
                     <td>
-                      <Link href={`/technical/tracking/${item.sample_id}`}>
+                      <Link href={`/technical/tracking/${item.sample_id}`} className="view-link">
                         View
                       </Link>
                     </td>
@@ -127,59 +126,65 @@ export default function RegistryPage() {
         h1 {
           margin: 0 0 6px;
           font-size: 28px;
+          color: #000000 !important; /* Forces black for title */
+          font-weight: 800;
         }
-        p {
+        .description {
           margin: 0;
-          color: #000000;
+          color: #1a1a1a !important; /* Darker gray/black for subtitle */
         }
-        button {
+        .refresh-btn {
           border: none;
           border-radius: 12px;
           padding: 12px 16px;
           font-weight: 700;
           cursor: pointer;
           background: #14003a;
-          color: #fff;
+          color: #ffffff !important;
         }
         .card,
         .tableWrap {
-          background: #fff;
+          background: #ffffff;
           border: 1px solid #e7e7ef;
           border-radius: 18px;
           padding: 18px;
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
         }
-        .error {
-          color: #b91c1c;
-          border-color: #fecaca;
-          background: #fff7f7;
-        }
         table {
           width: 100%;
           border-collapse: collapse;
         }
-        th,
+        th {
+          color: #000000 !important;
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          font-weight: 800;
+          padding: 14px 10px;
+          border-bottom: 2px solid #ececf4;
+        }
         td {
           text-align: left;
           padding: 14px 10px;
           border-bottom: 1px solid #ececf4;
           font-size: 14px;
+          color: #000000 !important; /* Explicitly forces row text to black */
+          opacity: 1 !important; /* Prevents any transparency issues */
         }
-        th {
-          color: #666;
-          font-size: 12px;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
-        a {
-          color: #14003a;
+        .view-link {
+          color: #14003a !important;
           font-weight: 700;
-          text-decoration: none;
+          text-decoration: underline;
         }
         .empty {
           text-align: center;
-          color: #777;
+          color: #333333 !important;
           padding: 24px;
+        }
+        .error {
+          color: #b91c1c !important;
+          border-color: #fecaca;
+          background: #fff7f7;
         }
       `}</style>
     </>

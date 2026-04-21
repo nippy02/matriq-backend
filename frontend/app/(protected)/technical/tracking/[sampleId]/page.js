@@ -6,15 +6,14 @@ import { useEffect, useState } from "react";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
 
-function authHeaders() {
+function authHeaders(json = false) {
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("access_token") ||
-        localStorage.getItem("technician-token")
+      ? localStorage.getItem("access_token") || localStorage.getItem("token")
       : null;
 
   return {
-    "Content-Type": "application/json",
+    ...(json ? { "Content-Type": "application/json" } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
