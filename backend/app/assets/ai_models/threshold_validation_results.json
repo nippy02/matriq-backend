@@ -1,0 +1,66 @@
+{
+  "status": "validated",
+  "validated_at": "2026-04-16T13:02:24Z",
+  "model_version": "v20260416130223",
+  "auto_accept_threshold": 0.85,
+  "manual_review_threshold": 0.7,
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "weighted_f1": 1.0,
+  "support": 102,
+  "decision_justification": {
+    "auto_accept": ">=85% confidence auto-registers via /api/samples.",
+    "manual_review_queue": "70% to 84.999% confidence or out-of-scope images go to manual review queue.",
+    "mandatory_override": "<70% confidence requires Senior Technician override via /api/validate."
+  },
+  "classification_report": {
+    "concrete": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 34.0
+    },
+    "rsb": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 34.0
+    },
+    "soil_aggregates": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 34.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 102.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 102.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      34,
+      0,
+      0
+    ],
+    [
+      0,
+      34,
+      0
+    ],
+    [
+      0,
+      0,
+      34
+    ]
+  ]
+}

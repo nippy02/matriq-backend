@@ -1,0 +1,17 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+PyJWT==2.11.0
+pydantic==2.11.10
+email-validator==2.3.0
+python-multipart==0.0.20
+pillow==10.4.0
+opencv-python==4.10.0.84
+numpy==1.26.4
+psycopg2-binary==2.9.11
+SQLAlchemy==2.0.44
+python-dotenv==1.0.1
+keras==3.3.3
+jax==0.4.30
+jaxlib==0.4.30
+httpx==0.28.1
+pytest==8.4.2

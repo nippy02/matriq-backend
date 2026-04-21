@@ -1,0 +1,61 @@
+{
+  "model_name": "MobileNetV2",
+  "version_number": "v20260416130223",
+  "accuracy": 1.0,
+  "loss": 0.012376,
+  "class_names": [
+    "concrete",
+    "rsb",
+    "soil_aggregates"
+  ],
+  "classification_report": {
+    "concrete": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 34.0
+    },
+    "rsb": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 34.0
+    },
+    "soil_aggregates": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 34.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 102.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 102.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      34,
+      0,
+      0
+    ],
+    [
+      0,
+      34,
+      0
+    ],
+    [
+      0,
+      0,
+      34
+    ]
+  ]
+}
