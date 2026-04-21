@@ -15,7 +15,6 @@ class SampleRegistrationRequest(BaseModel):
 
 
 class ValidateRequest(BaseModel):
-    review_case_id: str
-    final_label: str
+    sample_id: str
+    corrected_label: str
     justification: str
-    reviewer_notes: str | None = None

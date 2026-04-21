@@ -18,7 +18,10 @@ function authHeaders(json = false) {
   };
 }
 
-export default function TrackingDetailPage({ params }) {
+import { useParams } from "next/navigation";
+
+export default function TrackingDetailPage() {
+  const params = useParams();
   const sampleId = params?.sampleId;
   const [item, setItem] = useState(null);
   const [error, setError] = useState("");

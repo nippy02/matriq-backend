@@ -8,8 +8,7 @@ const API_BASE =
 function authHeaders() {
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("access_token") ||
-        localStorage.getItem("technician-token")
+      ? localStorage.getItem("access_token") || localStorage.getItem("token")
       : null;
 
   return {
