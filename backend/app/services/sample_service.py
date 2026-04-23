@@ -259,7 +259,8 @@ def list_reviews() -> list[dict]:
             s.notes,
             s.registered_by_user_id,
             s.registered_by_role,
-            s.created_at
+            s.created_at,
+            s.image_path
         FROM samples s
         WHERE s.decision = %s
         ORDER BY s.created_at DESC
@@ -288,6 +289,7 @@ def list_reviews() -> list[dict]:
                 "corrected_label": None,
                 "justification": row.get("notes"),
                 "reviewed_by": None,
+                "image_path": row.get("image_path"),  # FIX: expose image_path to frontend
             }
         )
     return output
@@ -311,10 +313,13 @@ def complete_review(*, sample_id: str, corrected_label_db: str, justification: s
             current_state = %s,
             is_immutable = %s,
             notes = %s,
+            decision = %s,
             updated_at = CURRENT_TIMESTAMP
         WHERE sample_id = %s
         """,
-        (corrected_label_db, "Registered", "Registered", True, justification, sample_id),
+        # FIX: decision updated to 'Completed' so list_reviews() (which filters
+        # by decision = 'Manual-Review') no longer returns this sample.
+        (corrected_label_db, "Registered", "Registered", True, justification, "Completed", sample_id),
     )
     return get_sample(sample_id)
 

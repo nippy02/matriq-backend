@@ -1,18 +1,45 @@
 import json
 import hashlib
+import uuid
 from io import BytesIO
 from pathlib import Path
 
+import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from PIL import Image, UnidentifiedImageError
 
-from ..config import CLASSIFY_ROLES
+from ..config import CLASSIFY_ROLES, SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_BUCKET
 from ..services.audit_service import log_event
 from ..services.auth_service import require_roles
 from ..services.model_service import active_model, predict, thresholds, validate_image_bytes
 from ..services.sample_service import create_sample_with_inference, get_review_by_sample_id
 
 router = APIRouter(prefix='/api', tags=['Classification'])
+
+
+def upload_to_supabase(raw: bytes, filename: str, content_type: str) -> str:
+    """
+    Uploads image bytes to Supabase Storage and returns the storage path (e.g. 'uploads/uuid_filename.jpg').
+    Raises HTTPException if the upload fails.
+    """
+    ext = Path(filename).suffix or '.jpg'
+    unique_name = f"{uuid.uuid4().hex}{ext}"
+    storage_path = f"uploads/{unique_name}"
+
+    url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{unique_name}"
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": content_type or "image/jpeg",
+    }
+
+    response = httpx.put(url, content=raw, headers=headers)
+    if response.status_code not in (200, 201):
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to upload image to storage: {response.text}",
+        )
+
+    return storage_path
 
 
 @router.post('/classify')
@@ -56,6 +83,10 @@ async def classify(
         log_event(action='CLASSIFICATION_FAILED', endpoint_accessed='/api/classify', user_id=current_user['user_id'], new_value={'reason': str(exc)}, ip_address=request.client.host if request.client else None)
         raise HTTPException(status_code=500, detail='Inference failed.')
 
+    # Upload image to Supabase Storage and get the storage path
+    content_type = image.content_type or 'image/jpeg'
+    image_path = upload_to_supabase(raw, image.filename or 'sample.jpg', content_type)
+
     thr = thresholds()
     confidence = result['confidence_score']
     if confidence >= thr['auto_accept_threshold'] and not result['out_of_scope']:
@@ -80,7 +111,7 @@ async def classify(
         branch_id=branch_id,
         registered_by=current_user['user_id'],
         registered_by_role=current_user['role'],
-        image_path=f'uploads/{image.filename or "sample-image"}',
+        image_path=image_path,
         is_immutable=immutable,
         ai_predicted_label_db=result['predicted_label_db'],
         confidence_score=confidence,

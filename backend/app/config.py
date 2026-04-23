@@ -61,6 +61,11 @@ LABEL_TO_DB = {
 }
 DB_TO_LABEL = {v: k for k, v in LABEL_TO_DB.items()}
 
+# Supabase Storage
+SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://aqumkaymehrylrvsgdpq.supabase.co')
+SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY', '')
+SUPABASE_BUCKET = os.getenv('SUPABASE_BUCKET', 'uploads')
+
 DEV_USERS = [
     {'username': 'jon@matriq.com', 'password': 'tech123', 'role': ROLE_LAB_TECH, 'full_name': 'Tech. Jon', 'user_id': 10001, 'branch_id': 1},
     {'username': 'senior@matriq.com', 'password': 'senior123', 'role': ROLE_SENIOR_TECH, 'full_name': 'Senior Tech', 'user_id': 10002, 'branch_id': 1},

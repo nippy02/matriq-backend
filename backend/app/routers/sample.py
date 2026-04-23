@@ -1,7 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
+from urllib.parse import urlparse
+from io import BytesIO
 import hashlib
+import httpx
+from urllib.parse import urlparse, quote
+
+
 
 from ..config import ROLE_ACCOUNTING, ROLE_ADMIN, ROLE_QA, ROLE_SENIOR_TECH, ROLE_LAB_TECH
+from ..config import SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_BUCKET
 from ..schemas import SampleRegistrationRequest
 from ..services.audit_service import log_event
 from ..services.auth_service import require_roles
@@ -92,6 +100,94 @@ def samples(
     )
     return data
 
+
+# NOTE: must be defined BEFORE /samples/{sample_id} to avoid route conflict
+@router.get("/samples/{sample_id}/image")
+def sample_image(
+    sample_id: str,
+    request: Request,
+    current_user=Depends(
+        require_roles(ROLE_LAB_TECH, ROLE_SENIOR_TECH, ROLE_QA, ROLE_ADMIN)
+    ),
+):
+    item = get_sample(sample_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Sample not found")
+
+    image_path = (item.get("image_path") or "").strip()
+    if not image_path:
+        raise HTTPException(status_code=404, detail="No image available for this sample")
+
+    object_key = image_path
+
+    # Safely strip any trailing slash from the base URL to prevent double slashes
+    base_supabase_url = SUPABASE_URL.rstrip("/")
+    
+    public_prefix = f"{base_supabase_url}/storage/v1/object/public/{SUPABASE_BUCKET}/"
+    sign_prefix = f"{base_supabase_url}/storage/v1/object/sign/{SUPABASE_BUCKET}/"
+
+    if object_key.startswith(public_prefix):
+        object_key = object_key[len(public_prefix):]
+    elif object_key.startswith(sign_prefix):
+        object_key = object_key[len(sign_prefix):].split("?", 1)[0]
+    else:
+        bucket_prefix = f"{SUPABASE_BUCKET}/"
+        if object_key.startswith(bucket_prefix):
+            object_key = object_key[len(bucket_prefix):]
+
+    # Clean up any leftover leading/trailing slashes
+    object_key = object_key.strip("/")
+
+    if not object_key:
+        raise HTTPException(status_code=400, detail=f"Invalid stored image_path: {image_path}")
+
+    # CRITICAL FIX: URL-encode the object key to handle spaces and special characters safely
+    safe_object_key = quote(object_key)
+
+    # OPTIMIZATION: Skip generating a signed URL entirely. 
+    # Directly download the image using the service key and stream it back.
+    download_url = f"{base_supabase_url}/storage/v1/object/authenticated/{SUPABASE_BUCKET}/{safe_object_key}"
+    
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "apikey": SUPABASE_SERVICE_KEY,
+    }
+
+    try:
+        with httpx.Client(timeout=20.0, follow_redirects=True) as client:
+            image_resp = client.get(download_url, headers=headers)
+
+            # Fallback: If the bucket is explicitly public, the authenticated endpoint might sometimes reject it.
+            if image_resp.status_code != 200:
+                public_url = f"{base_supabase_url}/storage/v1/object/public/{SUPABASE_BUCKET}/{safe_object_key}"
+                image_resp = client.get(public_url)
+
+            if image_resp.status_code != 200:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Could not download image. Status: {image_resp.status_code}, Response: {image_resp.text}"
+                )
+
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail=f"Image fetch failed: {str(exc)}")
+
+    log_event(
+        action="VIEW_SAMPLE_IMAGE",
+        endpoint_accessed=f"/api/samples/{sample_id}/image",
+        user_id=current_user["user_id"],
+        sample_id=None,
+        new_value={
+            "sample_id": sample_id,
+            "image_path": image_path,
+            "object_key": object_key,
+        },
+        ip_address=request.client.host if request.client else None,
+    )
+
+    return StreamingResponse(
+        BytesIO(image_resp.content),
+        media_type=image_resp.headers.get("content-type", "application/octet-stream"),
+    )
 
 @router.get("/samples/{sample_id}")
 def sample_detail(
