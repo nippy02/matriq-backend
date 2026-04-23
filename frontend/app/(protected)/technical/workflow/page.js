@@ -1,21 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
-
-function authHeaders() {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("access_token") || localStorage.getItem("token")
-      : null;
-
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { apiClient } from "@/services/apiClient";
 
 export default function WorkflowPage() {
   const [dashboard, setDashboard] = useState(null);
@@ -27,22 +13,10 @@ export default function WorkflowPage() {
     setLoading(true);
     setError("");
     try {
-      const [dashRes, reviewRes] = await Promise.all([
-        fetch(`${API_BASE}/api/dashboard`, {
-          headers: authHeaders(),
-          cache: "no-store",
-        }),
-        fetch(`${API_BASE}/api/reviews`, {
-          headers: authHeaders(),
-          cache: "no-store",
-        }),
+      const [dashData, reviewData] = await Promise.all([
+        apiClient.getDashboard(),
+        apiClient.getReviews(),
       ]);
-
-      if (!dashRes.ok) throw new Error(`Dashboard failed (${dashRes.status})`);
-      if (!reviewRes.ok) throw new Error(`Reviews failed (${reviewRes.status})`);
-
-      const dashData = await dashRes.json();
-      const reviewData = await reviewRes.json();
 
       setDashboard(dashData);
       setReviews(Array.isArray(reviewData) ? reviewData : []);
@@ -154,10 +128,12 @@ export default function WorkflowPage() {
         h1 {
           margin: 0 0 6px;
           font-size: 28px;
+          color: #000000;
         }
         h2 {
           margin: 0 0 12px;
           font-size: 20px;
+          color: #000000;
         }
         p {
           margin: 0;
@@ -188,13 +164,13 @@ export default function WorkflowPage() {
         }
         .statCard span {
           display: block;
-          color: #666;
+          color: #000000;
           font-size: 13px;
           margin-bottom: 8px;
         }
         .statCard strong {
           font-size: 30px;
-          color: #18181b;
+          color: #000000;
         }
         .error {
           color: #b91c1c;
@@ -222,7 +198,7 @@ export default function WorkflowPage() {
         }
         .label {
           font-size: 12px;
-          color: #777;
+          color: #000000;
           margin-bottom: 4px;
           text-transform: uppercase;
           letter-spacing: 0.04em;
@@ -230,7 +206,7 @@ export default function WorkflowPage() {
         .value {
           font-size: 15px;
           font-weight: 600;
-          color: #222;
+          color: #000000;
         }
         .pill {
           border-radius: 999px;

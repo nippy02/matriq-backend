@@ -2,27 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
-
-function authHeaders(json = false) {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("access_token") || localStorage.getItem("token")
-      : null;
-
-  return {
-    ...(json ? { "Content-Type": "application/json" } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 import { useParams } from "next/navigation";
+import { apiClient } from "@/services/apiClient";
 
 export default function TrackingDetailPage() {
   const params = useParams();
   const sampleId = params?.sampleId;
+
   const [item, setItem] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -32,12 +18,7 @@ export default function TrackingDetailPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/samples/${sampleId}`, {
-        headers: authHeaders(),
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error(`Failed to load sample (${res.status})`);
-      const data = await res.json();
+      const data = await apiClient.getSample(sampleId);
       setItem(data);
     } catch (err) {
       setError(err.message || "Failed to load sample detail.");
@@ -158,6 +139,7 @@ export default function TrackingDetailPage() {
         h1 {
           margin: 0 0 6px;
           font-size: 28px;
+          color: #000000;
         }
         p {
           margin: 0;
@@ -198,7 +180,7 @@ export default function TrackingDetailPage() {
         }
         .label {
           font-size: 12px;
-          color: #777;
+          color: #000000;
           margin-bottom: 4px;
           text-transform: uppercase;
           letter-spacing: 0.04em;
@@ -206,7 +188,7 @@ export default function TrackingDetailPage() {
         .value {
           font-size: 15px;
           font-weight: 600;
-          color: #222;
+          color: #000000;
           word-break: break-word;
         }
         .big {

@@ -2,21 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
-
-function authHeaders(json = false) {
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("access_token") || localStorage.getItem("token")
-      : null;
-
-  return {
-    ...(json ? { "Content-Type": "application/json" } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { apiClient } from "@/services/apiClient";
 
 export default function RegistryPage() {
   const [items, setItems] = useState([]);
@@ -27,12 +13,7 @@ export default function RegistryPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/api/samples`, {
-        headers: authHeaders(),
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error(`Failed to load samples (${res.status})`);
-      const data = await res.json();
+      const data = await apiClient.getSamples();
       setItems(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err.message || "Failed to load registry.");
@@ -126,12 +107,12 @@ export default function RegistryPage() {
         h1 {
           margin: 0 0 6px;
           font-size: 28px;
-          color: #000000 !important; /* Forces black for title */
+          color: #000000;
           font-weight: 800;
         }
         .description {
           margin: 0;
-          color: #1a1a1a !important; /* Darker gray/black for subtitle */
+          color: #000000;
         }
         .refresh-btn {
           border: none;
@@ -140,7 +121,7 @@ export default function RegistryPage() {
           font-weight: 700;
           cursor: pointer;
           background: #14003a;
-          color: #ffffff !important;
+          color: #ffffff;
         }
         .card,
         .tableWrap {
@@ -149,40 +130,41 @@ export default function RegistryPage() {
           border-radius: 18px;
           padding: 18px;
           box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+          color: #000000;
         }
         table {
           width: 100%;
           border-collapse: collapse;
         }
         th {
-          color: #000000 !important;
+          color: #000000;
           font-size: 12px;
           text-transform: uppercase;
           letter-spacing: 0.04em;
           font-weight: 800;
           padding: 14px 10px;
           border-bottom: 2px solid #ececf4;
+          text-align: left;
         }
         td {
           text-align: left;
           padding: 14px 10px;
           border-bottom: 1px solid #ececf4;
           font-size: 14px;
-          color: #000000 !important; /* Explicitly forces row text to black */
-          opacity: 1 !important; /* Prevents any transparency issues */
+          color: #000000;
         }
         .view-link {
-          color: #14003a !important;
+          color: #14003a;
           font-weight: 700;
           text-decoration: underline;
         }
         .empty {
           text-align: center;
-          color: #333333 !important;
+          color: #000000;
           padding: 24px;
         }
         .error {
-          color: #b91c1c !important;
+          color: #b91c1c;
           border-color: #fecaca;
           background: #fff7f7;
         }
